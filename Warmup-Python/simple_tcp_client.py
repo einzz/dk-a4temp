@@ -24,6 +24,16 @@ def connect_to_server(host, port):
     global client_socket
 
     client_socket = socket(AF_INET, SOCK_STREAM)
+    #client_socket.settimeout(5)
+    client_socket.connect((host, port))
+    #client_socket.send("Hi".encode())
+    addr = False
+    addr = client_socket.getpeername()
+
+    if addr == False:
+        print("Error happened:")
+        return False
+
 
     # TODO - implement this method
     # Remember to catch all possible exceptions the socket can throw in case you have not worked with exceptions,
@@ -33,7 +43,8 @@ def connect_to_server(host, port):
     # except IOError as e:
     #     print("Error happened:", e)
     #     what_to_do_in_case_of_error()
-    return False
+
+    return True
 
 
 def close_connection():
@@ -43,7 +54,9 @@ def close_connection():
     """
     # The "global" keyword is needed so that this function refers to the globally defined client_socket variable
     global client_socket
-
+    client_socket.close()
+    if client_socket is False:
+        return True
     # TODO - implement this method
     return False
 
@@ -55,9 +68,11 @@ def send_request_to_server(request):
     """
     # The "global" keyword is needed so that this function refers to the globally defined client_socket variable
     global client_socket
+    request_new_line = request + "\n"
+    client_socket.send(request_new_line.encode())
 
     # TODO - implement this method
-    return False
+    return True
 
 
 def read_response_from_server():
@@ -66,10 +81,15 @@ def read_response_from_server():
     :return: The response received from the server, None on error. The newline character is stripped away
      (not included in the returned value).
     """
+
     # The "global" keyword is needed so that this function refers to the globally defined client_socket variable
     global client_socket
+    msg = False
+    msg = client_socket.recv(1000).decode()
+    if msg == "error":
+        return None
 
-    return None
+    return msg
 
 
 def run_client_tests():
@@ -123,5 +143,6 @@ def run_client_tests():
 
 # Main entrypoint of the script
 if __name__ == '__main__':
+
     result = run_client_tests()
     print(result)
