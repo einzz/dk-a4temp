@@ -6,8 +6,8 @@ import time
 from socket import *
 
 # Hostname of the server and TCP port number to use
-HOST = "datakomm.work"
-PORT = 1301
+HOST = "localhost"
+PORT = 5678
 
 # The socket object (connection to the server and data excahgne will happen using this variable)
 client_socket = None
@@ -24,7 +24,7 @@ def connect_to_server(host, port):
     global client_socket
 
     client_socket = socket(AF_INET, SOCK_STREAM)
-    client_socket.settimeout(10)
+    #client_socket.settimeout(10)
     client_socket.connect((host, port))
 
     addr = False
