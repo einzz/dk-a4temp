@@ -24,9 +24,9 @@ def connect_to_server(host, port):
     global client_socket
 
     client_socket = socket(AF_INET, SOCK_STREAM)
-    #client_socket.settimeout(5)
+    client_socket.settimeout(10)
     client_socket.connect((host, port))
-    #client_socket.send("Hi".encode())
+
     addr = False
     addr = client_socket.getpeername()
 
@@ -55,10 +55,9 @@ def close_connection():
     # The "global" keyword is needed so that this function refers to the globally defined client_socket variable
     global client_socket
     client_socket.close()
-    if client_socket is False:
-        return True
+
     # TODO - implement this method
-    return False
+    return True
 
 
 def send_request_to_server(request):
@@ -86,7 +85,7 @@ def read_response_from_server():
     global client_socket
     msg = False
     msg = client_socket.recv(1000).decode()
-    if msg == "error":
+    if msg is None:
         return None
 
     return msg
@@ -117,7 +116,7 @@ def run_client_tests():
     print("Server responded with: ", response)
     seconds_to_sleep = 2 + random.randint(0, 5)
     print("Sleeping %i seconds to allow simulate long client-server connection..." % seconds_to_sleep)
-    time.sleep(seconds_to_sleep * 1000)
+    time.sleep(seconds_to_sleep * 1)
 
     request = "bla+bla"
     if not send_request_to_server(request):
