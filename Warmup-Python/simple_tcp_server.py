@@ -17,13 +17,11 @@ def run_server():
 
     need_too_run = True
     while need_too_run:
-        make_connection_socket(connection_socket)
+        #make_connection_socket(connection_socket)
+        client_thread = threading.Thread(target=make_connection_socket, args=(connection_socket,))
+        client_thread.start()
 
- #       client_thread = threading.Thread(target=make_connection_socket, args=(connection_socket,))
-  #      client_thread.start()
-
-
-
+    print("Closing sockets")
     connection_socket.close()
     welcome_socket.close()
 
@@ -34,7 +32,6 @@ def make_connection_socket(connection_socket):
     print("Message from client: ", client_message)
     if client_message == "game over\n":
         need_too_run = False
-        connection_socket.close()
 
     if not split_and_add(client_message):
         response = "error"
