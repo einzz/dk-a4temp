@@ -83,10 +83,7 @@ def read_response_from_server():
 
     # The "global" keyword is needed so that this function refers to the globally defined client_socket variable
     global client_socket
-    msg = False
     msg = client_socket.recv(1000).decode()
-    if msg is None:
-        return None
 
     return msg
 
