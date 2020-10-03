@@ -14,11 +14,13 @@ def run_server():
     welcome_socket.listen(1)
 
     connection_socket, client_address = welcome_socket.accept()
+
     need_too_run = True
     while need_too_run:
+        make_connection_socket(connection_socket)
 
-        client_thread = threading.Thread(target=make_connection_socket, args=(connection_socket,))
-        client_thread.start()
+ #       client_thread = threading.Thread(target=make_connection_socket, args=(connection_socket,))
+  #      client_thread.start()
 
 
 
@@ -32,6 +34,7 @@ def make_connection_socket(connection_socket):
     print("Message from client: ", client_message)
     if client_message == "game over\n":
         need_too_run = False
+        connection_socket.close()
 
     if not split_and_add(client_message):
         response = "error"
@@ -46,11 +49,14 @@ def make_connection_socket(connection_socket):
 
 
 def split_and_add(client_message):
-    if isinstance(client_message, !int): #wtf
-        return False
-    else:
+
         cl_split = client_message.split("+", 2)
-        response = str(int(cl_split[0]) + int(cl_split[1]))
+        try:
+            cl_split_int = int(cl_split[0]) + int(cl_split[1])
+            response = str(cl_split_int)
+        except ValueError:
+            response = "error"
+
         return response
 
 
