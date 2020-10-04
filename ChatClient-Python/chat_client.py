@@ -1,7 +1,7 @@
 #################################################################################
 # A Chat Client application. Used in the course IELEx2001 Computer networks, NTNU
 #################################################################################
-#GROUP: Elektro group 7: Einar, Christoffer and Simon.
+# GROUP: Elektro group 7: Einar, Christoffer and Simon.
 
 from socket import *
 
@@ -55,6 +55,7 @@ def send_command(command, arguments):
         return
     return
 
+
 def read_one_line(sock):
     """
     Read one line of text from a socket
@@ -91,7 +92,6 @@ def connect_to_server():
     global client_socket
     global current_state
 
-
     # Hint: create a socket, connect, handle exceptions, then change current_state accordingly
     client_socket = socket(AF_INET, SOCK_STREAM)
     try:
@@ -118,9 +118,7 @@ def connect_to_server():
     # will come in handy later as well - when we will want to check the server's response to login, messages etc
 
 
-
 def disconnect_from_server():
-
     # Hint: close the socket, handle exceptions, update current_state accordingly
 
     # Must have these two lines, otherwise the function will not "see" the global variables that we will change here
@@ -136,6 +134,7 @@ def disconnect_from_server():
     current_state = "disconnected"
     return
 
+
 def login():
     global current_state
 
@@ -150,8 +149,8 @@ def login():
 
     return
 
-def send_public_message():
 
+def send_public_message():
     msg_to_send = input("Input public message: ")
     send_command("msg", msg_to_send)
     response = get_servers_response()
@@ -163,8 +162,8 @@ def send_public_message():
 
     return
 
-def request_user_list():
 
+def request_user_list():
     send_command("users\n", None)
     response = get_servers_response()
     response_split = response.split(" ")
@@ -176,8 +175,8 @@ def request_user_list():
 
     return
 
-def send_private_message():
 
+def send_private_message():
     send_to_username = input("Send to username: ")
     msg_to_send = input("Input private message: ")
     command_to_send = send_to_username + " " + msg_to_send
@@ -191,6 +190,29 @@ def send_private_message():
     return
 
 
+def read_inbox():
+    send_command("inbox", "")
+
+    read_more = True
+    while read_more:
+        response = get_servers_response()
+        if response == "inbox 0":
+            print("Inbox empty")
+            return
+        else:
+            response_split = response.split(" ", 2)
+            if response_split[0] == "inbox":
+                print("You have ", response_split[1], "new messages.")
+            elif response_split[0] == "msg":
+                print("(Public)", response_split[1], ": ", response_split[2])
+            elif response_split[0] == "privmsg":
+                print("(Private)", response_split[1], ": ", response_split[2])
+            else:
+                return
+    return
+
+
+
 """
 The list of available actions that the user can perform
 Each action is a dictionary with the following fields:
@@ -199,8 +221,6 @@ valid_states: a list specifying in which states this action is available
 function: a function to call when the user chooses this particular action. The functions must be defined before
             the definition of this variable
 """
-
-
 
 available_actions = [
     {
@@ -253,7 +273,7 @@ available_actions = [
         # Hint: send the inbox command, find out how many messages there are. Then parse messages
         # one by one: find if it is a private or public message, who is the sender. Print this
         # information in a user friendly way
-        "function": None
+        "function": read_inbox
     },
     {
         "description": "See list of users",
