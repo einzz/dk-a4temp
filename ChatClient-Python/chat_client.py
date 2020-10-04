@@ -1,9 +1,9 @@
 #################################################################################
 # A Chat Client application. Used in the course IELEx2001 Computer networks, NTNU
 #################################################################################
+#GROUP: Elektro group 7: Einar, Christoffer and Simon.
 
 from socket import *
-
 
 # --------------------
 # Constants
@@ -15,7 +15,7 @@ states = [
     "authorized"  # Connected and authorized (logged in)
 ]
 TCP_PORT = 1300  # TCP port used for communication
-SERVER_HOST = "localhost"  # Set this to either hostname (domain) or IP address of the chat server
+SERVER_HOST = "datakomm.work"  # Set this to either hostname (domain) or IP address of the chat server
 
 # --------------------
 # State variables
@@ -45,11 +45,15 @@ def send_command(command, arguments):
     :return:
     """
     global client_socket
-    # TODO: Implement this (part of step 3)
     # Hint: concatenate the command and the arguments
     # Hint: remember to send the newline at the end
-    pass
-
+    try:
+        message_too_send = str(command) + " " + str(arguments) + "\n"
+        client_socket.send(message_too_send.encode())
+    except:
+        print("ERROR: Cant send message!")
+        return
+    return
 
 def read_one_line(sock):
     """
@@ -75,9 +79,11 @@ def get_servers_response():
     Wait until a response command is received from the server
     :return: The response of the server, the whole line as a single string
     """
-    # TODO Step 4: implement this function
+
     # Hint: reuse read_one_line (copied from the tutorial-code)
-    return None
+    global client_socket
+    server_response = read_one_line(client_socket)
+    return server_response
 
 
 def connect_to_server():
@@ -85,29 +91,104 @@ def connect_to_server():
     global client_socket
     global current_state
 
-    # TODO Step 1: implement connection establishment
-    # Hint: create a socket, connect, handle exceptions, then change current_state accordingly
 
-    # TODO Step 3: switch to sync mode
+    # Hint: create a socket, connect, handle exceptions, then change current_state accordingly
+    client_socket = socket(AF_INET, SOCK_STREAM)
+    try:
+        client_socket.connect((SERVER_HOST, TCP_PORT))
+    except:
+        print("Error connecting to server!")
+        current_state = "disconnected"
+        return
+
+    current_state = "connected"
+    send_command("async", "")
+    if get_servers_response() == "modeok":
+        print("SYNC MODE ENGAGED!")
+    else:
+        print("N'SYNC error!: ", get_servers_response())
+    return
+
     # Hint: send the sync command according to the protocol
     # Hint: create function send_command(command, arguments) which you will use to send this and all other commands
     # to the server
 
-    # TODO Step 4: wait for the servers response and find out whether the switch to SYNC mode was successful
     # Hint: implement the get_servers_response function first - it should wait for one response command from the server
     # and return the server's response (we expect "modeok" response here). This get_servers_response() function
     # will come in handy later as well - when we will want to check the server's response to login, messages etc
-    print("CONNECTION NOT IMPLEMENTED!")
+
 
 
 def disconnect_from_server():
-    # TODO Step 2: Implement disconnect
+
     # Hint: close the socket, handle exceptions, update current_state accordingly
 
     # Must have these two lines, otherwise the function will not "see" the global variables that we will change here
     global client_socket
     global current_state
-    pass
+
+    try:
+        client_socket.close()
+    except:
+        print("Error! Cant dissconnect! :O")
+        return
+
+    current_state = "disconnected"
+    return
+
+def login():
+    global current_state
+
+    username = input("Input desired username: ")
+    send_command("login", username)
+    response = get_servers_response()
+    if response == "loginok":
+        current_state = "authorized"
+        print("Login ok")
+    else:
+        print("Error: ", response)
+
+    return
+
+def send_public_message():
+
+    msg_to_send = input("Input public message: ")
+    send_command("msg", msg_to_send)
+    response = get_servers_response()
+    response_split = response.split()
+    if response_split[0] == "msgok":
+        print("Message sent to", response_split[1], "users")
+    else:
+        print(response)
+
+    return
+
+def request_user_list():
+
+    send_command("users\n", None)
+    response = get_servers_response()
+    response_split = response.split(" ")
+    for i in response_split:
+        if i == "users":
+            print("Users on the server:")
+        else:
+            print(i)
+
+    return
+
+def send_private_message():
+
+    send_to_username = input("Send to username: ")
+    msg_to_send = input("Input private message: ")
+    command_to_send = send_to_username + " " + msg_to_send
+    send_command("privmsg", command_to_send)
+    response = get_servers_response()
+    if response == "msgok 1\n":
+        print("Message sent to ", send_to_username)
+    else:
+        print(response)
+
+    return
 
 
 """
@@ -118,6 +199,9 @@ valid_states: a list specifying in which states this action is available
 function: a function to call when the user chooses this particular action. The functions must be defined before
             the definition of this variable
 """
+
+
+
 available_actions = [
     {
         "description": "Connect to a chat server",
@@ -132,7 +216,7 @@ available_actions = [
     {
         "description": "Authorize (log in)",
         "valid_states": ["connected", "authorized"],
-        # TODO Step 5 - implement login
+
         # Hint: you will probably want to create a new function (call it login(), or authorize()) and
         # reference that function here.
         # Hint: you can ask the user to enter the username with input("Enter username: ") function.
@@ -142,25 +226,25 @@ available_actions = [
         # Hint: you probably want to change the state of the system: update value of current_state variable
         # Hint: remember to tell the function that you will want to use the global variable "current_state".
         # Hint: if the login was unsuccessful (loginerr returned), show the error message to the user
-        "function": None
+        "function": login
     },
     {
         "description": "Send a public message",
         "valid_states": ["connected", "authorized"],
-        # TODO Step 6 - implement sending a public message
+
         # Hint: ask the user to input the message from the keyboard
         # Hint: you can reuse the send_command() function to send the "msg" command
         # Hint: remember to read the server's response: whether the message was successfully sent or not
-        "function": None
+        "function": send_public_message
     },
     {
         "description": "Send a private message",
         "valid_states": ["authorized"],
-        # TODO Step 8 - implement sending a private message
+
         # Hint: ask the user to input the recipient and message from the keyboard
         # Hint: you can reuse the send_command() function to send the "privmsg" command
         # Hint: remember to read the server's response: whether the message was successfully sent or not
-        "function": None
+        "function": send_private_message
     },
     {
         "description": "Read messages in the inbox",
@@ -174,11 +258,11 @@ available_actions = [
     {
         "description": "See list of users",
         "valid_states": ["connected", "authorized"],
-        # TODO Step 7 - Implement getting the list of currently connected users
+
         # Hint: use the provided chat client tools and analyze traffic with Wireshark to find out how
         # the user list is reported. Then implement a function which gets the user list from the server
         # and prints the list of usernames
-        "function": None
+        "function": request_user_list
     },
     {
         "description": "Get a joke",
@@ -264,6 +348,7 @@ def perform_user_action(action_index):
         print("Invalid input, please choose a valid action")
     print()
     return None
+
 
 # Entrypoint for the application. In PyCharm you should see a green arrow on the left side.
 # By clicking it you run the application.
