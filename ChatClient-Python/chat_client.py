@@ -211,6 +211,12 @@ def read_inbox():
                 return
     return
 
+def get_joke():
+    send_command("joke", "")
+    response = get_servers_response()
+    response_split = response.split(" ", 1)
+    print("Joke from server:", response_split[1])
+    return
 
 
 """
@@ -269,7 +275,7 @@ available_actions = [
     {
         "description": "Read messages in the inbox",
         "valid_states": ["connected", "authorized"],
-        # TODO Step 9 - implement reading messages from the inbox.
+
         # Hint: send the inbox command, find out how many messages there are. Then parse messages
         # one by one: find if it is a private or public message, who is the sender. Print this
         # information in a user friendly way
@@ -287,10 +293,10 @@ available_actions = [
     {
         "description": "Get a joke",
         "valid_states": ["connected", "authorized"],
-        # TODO - optional step - implement the joke fetching from the server.
+
         # Hint: this part is not described in the protocol. But the command is simple. Try to find
         # out how it works ;)
-        "function": None
+        "function": get_joke
     },
     {
         "description": "Quit the application",
