@@ -227,8 +227,9 @@ def get_joke():
 def monitor_chat():
     global async_mode
 
-    incoming_msg = get_servers_response()
-    print(incoming_msg)
+    while async_mode:
+        incoming_msg = get_servers_response()
+        print(incoming_msg)
 
         #incoming_msg_split = incoming_msg.split(" ", 1)
         #if incoming_msg_split[0] == "msg":
