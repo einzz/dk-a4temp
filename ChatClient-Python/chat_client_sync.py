@@ -4,6 +4,7 @@
 # GROUP: Elektro group 7: Einar, Christoffer and Simon.
 import threading
 from socket import *
+import time
 
 # --------------------
 # Constants
@@ -23,7 +24,8 @@ SERVER_HOST = "datakomm.work"  # Set this to either hostname (domain) or IP addr
 current_state = "disconnected"  # The current state of the system
 # When this variable will be set to false, the application will stop
 must_run = True
-async_mode = False
+sync_mode = False
+pause_thread = False
 # Use this variable to create socket connection to the chat server
 # Note: the "type: socket" is a hint to PyCharm about the type of values we will assign to the variable
 client_socket = None  # type: socket
@@ -103,12 +105,16 @@ def connect_to_server():
         return
 
     current_state = "connected"
-    send_command("async", "")
-    if get_servers_response() == "modeok":
-        print("SYNC MODE ENGAGED!")
-    else:
-        print("N'SYNC error!: ", get_servers_response())
-    return
+
+    monitor_thread = threading.Thread(target=monitor_chat)
+    monitor_thread.start()
+
+    #send_command("async", "")
+    #if get_servers_response() == "modeok":
+    #    print("SYNC MODE ENGAGED!")
+    #else:
+    #    print("N'SYNC error!: ", get_servers_response())
+    #return
 
     # Hint: send the sync command according to the protocol
     # Hint: create function send_command(command, arguments) which you will use to send this and all other commands
@@ -141,31 +147,35 @@ def login():
 
     username = input("Input desired username: ")
     send_command("login", username)
-    response = get_servers_response()
+    #response = get_servers_response()
+    current_state = "authorized"
+    """
     if response == "loginok":
-        current_state = "authorized"
+        
         print("Login ok")
     else:
         print("Error: ", response)
-
+    """
     return
 
 
 def send_public_message():
     msg_to_send = input("Input public message: ")
     send_command("msg", msg_to_send)
+    """
     response = get_servers_response()
     response_split = response.split()
     if response_split[0] == "msgok":
         print("Message sent to", response_split[1], "users")
     else:
         print(response)
-
+    """
     return
 
 
 def request_user_list():
     send_command("users\n", None)
+    """
     response = get_servers_response()
     response_split = response.split(" ")
     for i in response_split:
@@ -173,7 +183,7 @@ def request_user_list():
             print("Users on the server:")
         else:
             print(i)
-
+    """
     return
 
 
@@ -182,11 +192,11 @@ def send_private_message():
     msg_to_send = input("Input private message: ")
     command_to_send = send_to_username + " " + msg_to_send
     send_command("privmsg", command_to_send)
-    response = get_servers_response()
-    if response == "msgok 1\n":
-        print("Message sent to ", send_to_username)
-    else:
-        print(response)
+    #response = get_servers_response()
+    #if response == "msgok 1\n":
+    #    print("Message sent to ", send_to_username)
+    #else:
+    #    print(response)
 
     return
 
@@ -194,57 +204,84 @@ def send_private_message():
 def read_inbox():
     send_command("inbox", "")
 
-    read_more = True
-    while read_more:
-        response = get_servers_response()
-        if response == "inbox 0":
-            print("Inbox empty")
-            return
-        else:
-            response_split = response.split(" ", 2)
-            if response_split[0] == "inbox":
-                print("You have ", response_split[1], "new messages.")
-            elif response_split[0] == "msg":
-                print("(Public)", response_split[1], ": ", response_split[2])
-            elif response_split[0] == "privmsg":
-                print("(Private)", response_split[1], ": ", response_split[2])
-            else:
-                return
-    return
+"""
+    response = get_servers_response()
+    response_split = response.split(" ", 2)
+    number_of_msgs = response_split[1]
+    print("You have ", response_split[1], "new messages.")
 
+    for _ in range(int(number_of_msgs)):
+        response = get_servers_response()
+        response_split = response.split(" ", 2)
+
+        if response_split[0] == "msg":
+            print("(Public)", response_split[1], ": ", response_split[2])
+        else:
+            print("(Private)", response_split[1], ": ", response_split[2])
+"""
 
 def get_joke():
     send_command("joke", "")
+    pause_thread()
+
     response = get_servers_response()
     response_split = response.split(" ", 1)
     try:
         print("Joke from server:", response_split[1])
     except:
         print("ERROR: Can't find humor")
+    unpause_thread()
     return
 
 
 def monitor_chat():
     global async_mode
+    global pause_thread
+    while True:
+        if pause_thread == True:
+            time.sleep(1)
+        else:
+            incoming_msg = get_servers_response()
+            print()
+            print(incoming_msg)
 
-    while async_mode:
-        incoming_msg = get_servers_response()
-        print(incoming_msg)
+            incoming_msg_split = incoming_msg.split(" ", 2)
+            if incoming_msg_split[0] == "msg":
+                print("(Public)", incoming_msg_split[1], ":", incoming_msg_split[2])
+            elif incoming_msg_split[0] == "privmsg":
+                print("(Private)", incoming_msg_split[1], ":", incoming_msg_split[2])
 
-        #incoming_msg_split = incoming_msg.split(" ", 1)
-        #if incoming_msg_split[0] == "msg":
+    """       
+            if incoming_msg_split[0] == "users":
+                print("Users on the server:")
+                again_split = incoming_msg_split[1].split(" ")
+                for i in again_split:
+                    print(i)
+"""
+
+
     return
+
+def pause_thread():
+    global pause_thread
+    pause_thread = True
+
+
+def unpause_thread():
+    global pause_thread
+    pause_thread = False
+
 
 
 def change_sync_mode():
     global async_mode
 
     if async_mode:
-        send_command("async\n", "")
+        send_command("sync", "")
         async_mode = False
 
     else:
-        send_command("sync\n", "")
+        send_command("async", "")
         async_mode = True
 
     return
@@ -417,6 +454,5 @@ def perform_user_action(action_index):
 if __name__ == '__main__':
     menu_thread = threading.Thread(target=run_chat_client)
     menu_thread.start()
-    if async_mode:
-        monitor_thread = threading.Thread(target=monitor_chat)
-        monitor_thread.start()
+
+
