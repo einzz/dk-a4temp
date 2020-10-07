@@ -102,7 +102,7 @@ def connect_to_server():
         return
 
     current_state = "connected"
-    send_command("async", "")
+    send_command("sync", "")
     if get_servers_response() == "modeok":
         print("SYNC MODE ENGAGED!")
     else:
@@ -164,7 +164,7 @@ def send_public_message():
 
 
 def request_user_list():
-    send_command("users\n", None)
+    send_command("users", "")
     response = get_servers_response()
     response_split = response.split(" ")
     for i in response_split:
@@ -193,23 +193,21 @@ def send_private_message():
 def read_inbox():
     send_command("inbox", "")
 
-    read_more = True
-    while read_more:
+
+    response = get_servers_response()
+    response_split = response.split(" ", 2)
+    number_of_msgs = response_split[1]
+    print("You have ", response_split[1], "new messages.")
+    
+    for _ in range(int(number_of_msgs)):
         response = get_servers_response()
-        if response == "inbox 0":
-            print("Inbox empty")
-            return
+        response_split = response.split(" ", 2)
+
+        if response_split[0] == "msg":
+            print("(Public)", response_split[1], ": ", response_split[2])
         else:
-            response_split = response.split(" ", 2)
-            if response_split[0] == "inbox":
-                print("You have ", response_split[1], "new messages.")
-            elif response_split[0] == "msg":
-                print("(Public)", response_split[1], ": ", response_split[2])
-            elif response_split[0] == "privmsg":
-                print("(Private)", response_split[1], ": ", response_split[2])
-            else:
-                return
-    return
+            print("(Private)", response_split[1], ": ", response_split[2])
+
 
 def get_joke():
     send_command("joke", "")
