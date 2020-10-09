@@ -198,7 +198,7 @@ def read_inbox():
     response_split = response.split(" ", 2)
     number_of_msgs = response_split[1]
     print("You have ", response_split[1], "new messages.")
-    
+
     for _ in range(int(number_of_msgs)):
         response = get_servers_response()
         response_split = response.split(" ", 2)
